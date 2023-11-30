@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from movies.models import Certification, Movie
+from movies.models import Certification, Movie, Genre
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = ("id", "name")
 
 
 class MovieSerializer(serializers.Serializer):
@@ -16,6 +22,9 @@ class MovieSerializer(serializers.Serializer):
         queryset=Certification.objects.all(), many=False
     )
     description = serializers.CharField()
+    genre = serializers.PrimaryKeyRelatedField(
+        queryset=Genre.objects.all(), many=True
+    )
 
     def create(self, validated_data):
         certification = validated_data.pop("certification")
@@ -34,6 +43,8 @@ class MovieSerializer(serializers.Serializer):
         instance.meta_score = validated_data.get("meta_score", instance.meta_score)
         instance.gross = validated_data.get("gross", instance.gross)
         instance.description = validated_data.get("description", instance.description)
+
+        instance.genre.set(validated_data.get("genre", instance.genre))
 
         is_partial = self.context["request"].method == "PATCH"
         if certification_data:
